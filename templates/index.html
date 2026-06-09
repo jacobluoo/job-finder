@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Finder</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 3rem 1rem; }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: 2rem 2.5rem; max-width: 700px; width: 100%; }
+    h1 { margin: 0 0 1.5rem; font-size: 1.4rem; }
+    button { padding: .6rem 1.4rem; font-size: 1rem; border: none; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #status { margin: 1rem 0 .5rem; font-weight: 600; }
+    .success { color: #16a34a; }
+    .error   { color: #dc2626; }
+    .running { color: #9333ea; }
+    pre { background: #1e1e1e; color: #d4d4d4; border-radius: 6px; padding: 1rem; font-size: .78rem; overflow-x: auto; max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Job Finder Pipeline</h1>
+    <button id="run-btn" onclick="runPipeline()">Run Pipeline</button>
+    <div id="status"></div>
+    <pre id="log-output" style="display:none"></pre>
+  </div>
+  <script>
+    async function runPipeline() {
+      const btn = document.getElementById('run-btn');
+      const status = document.getElementById('status');
+      const logOutput = document.getElementById('log-output');
+
+      btn.disabled = true;
+      status.className = 'running';
+      status.textContent = 'Running…';
+      logOutput.style.display = 'none';
+
+      try {
+        const res = await fetch('/run', { method: 'POST' });
+        const data = await res.json();
+        status.className = data.success ? 'success' : 'error';
+        status.textContent = data.success ? 'Pipeline completed successfully.' : 'Pipeline failed — see log below.';
+        logOutput.textContent = data.logs;
+        logOutput.style.display = 'block';
+      } catch (err) {
+        status.className = 'error';
+        status.textContent = 'Request failed: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

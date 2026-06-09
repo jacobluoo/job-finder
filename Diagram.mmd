@@ -1,0 +1,92 @@
+sequenceDiagram
+  autonumber
+  participant M  as run.main
+  participant A  as AdzunaSource
+  participant X  as Adzuna API
+  participant F  as filters
+  participant D  as db
+  participant E  as email_sender
+  participant G  as Gmail SMTP
+
+  M->>M: _setup_logging()
+  M->>D: init_db(DB_PATH)
+
+  M->>A: fetch()
+
+  loop for each query in SEARCH_QUERIES
+    A->>A: _fetch_query(what, where)
+
+    loop paginate until no more pages
+      A->>A: _get_page(what, where, page)
+
+      alt HTTP 429 or 5xx (retry up to 3x)
+        A->>X: GET /v1/jobs?...
+        X-->>A: 429 / 5xx
+        A->>A: sleep and retry
+        A->>X: GET /v1/jobs?... (retry)
+        X-->>A: 429 / 5xx
+        A->>A: sleep and retry
+        A->>X: GET /v1/jobs?... (retry 3)
+        X-->>A: 429 / 5xx — all failed
+        A-->>A: _get_page returns None
+      else success
+        A->>X: GET /v1/jobs?...
+        X-->>A: JSON response
+        loop for each raw result
+          A->>A: _normalize(raw) → job dict
+        end
+        A-->>A: _get_page returns list[dict]
+      end
+
+      A->>A: check hasMorePages?
+    end
+
+    A-->>A: _fetch_query returns list[dict]
+  end
+
+  A->>A: deduplicate across queries by ID
+  A-->>M: list[dict] all_jobs
+
+  M->>F: apply_filters(all_jobs)
+  loop for each job
+    F->>F: _keyword_match(job)
+    F->>F: _location_match(job) [checks location, area[], title for "ontario"/"remote"]
+  end
+  F-->>M: list[dict] filtered_jobs
+
+  M->>D: filter_new(filtered_jobs, DB_PATH)
+  Note over D: SELECT WHERE id IN (...)
+  D-->>M: list[dict] new_jobs
+
+  alt new_jobs is empty
+    M->>M: log "No new listings"
+    M-->>M: return 0
+    Note over M: sys.exit(0) — no email sent
+  else new jobs found
+    M->>D: mark_seen(new_jobs, DB_PATH)
+    Note over D: INSERT OR IGNORE
+
+    M->>E: send_digest(new_jobs)
+    E->>E: build_html(new_jobs)
+    loop for each job
+      E->>E: _row_html(job, index)
+      E->>E: _format_salary(job)
+      E->>E: _format_date(iso)
+      E->>E: _escape(text)
+    end
+    E-->>E: HTML string ready
+
+    E->>E: build MIMEMultipart message
+    E->>G: SMTP_SSL connect → login → sendmail
+    G-->>E: OK
+
+    M->>M: log "Digest sent: N new listings"
+    M-->>M: return 0
+    Note over M: sys.exit(0)
+  end
+
+  opt exception anywhere in main()
+    M->>M: log traceback
+    M-->>M: return 1
+    Note over M: sys.exit(1)
+  end
