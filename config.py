@@ -103,7 +103,7 @@ KEYWORDS: list[str] = [
 EXCLUDE_KEYWORDS: list[str] = [
     # Experience requirements
     "5+ years", "7+ years", "10+ years", "senior", "lead", "principal",
-    "staff engineer", "manager", "director", "vp ", "vice president",
+    "staff engineer", "manager", "director", " vp ", "vice president",
     "head of", "chief", "executive",
 
     # Graduate level

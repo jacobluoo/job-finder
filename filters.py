@@ -6,12 +6,11 @@ def apply_filters(jobs: list[dict]) -> list[dict]:
 
 
 def _keyword_match(job: dict) -> bool:
-    haystack = " ".join([
+    haystack = " " + " ".join([
         (job.get("title") or ""),
-        (job.get("company") or ""),
         (job.get("location") or ""),
-    ]).lower()
-    return any(kw in haystack for kw in config.KEYWORDS)
+    ]).lower() + " "
+    return any(f" {kw} " in haystack for kw in config.KEYWORDS)
 
 
 def _location_match(job: dict) -> bool:
@@ -23,5 +22,5 @@ def _location_match(job: dict) -> bool:
 
 def _exclude_match(job: dict) -> bool:
     title = (job.get("title") or "").lower()
-    searchable = title
+    searchable = f" {title} "
     return any(exclude in searchable for exclude in config.EXCLUDE_KEYWORDS)
