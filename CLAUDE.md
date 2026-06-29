@@ -84,6 +84,34 @@ The `area` field is critical: Adzuna's `location.display_name` is city-level onl
 4. Add any new credentials to `.env` and `config.py`
 5. Register in `run.py`: add to the `sources` list in `main()`
 
+## Search targets and filters (`config.py`)
+
+**Scope:** Hardware and mechanical engineering co-op/intern roles in Ontario (or remote). AI/ML/software-adjacent queries were intentionally removed — this pipeline targets physical-systems engineering only.
+
+**`SEARCH_QUERIES`** — Adzuna `(what, where)` pairs grouped by discipline:
+- Mechanical engineering (intern, co-op, student, design)
+- Automation & controls (automation, controls, PLC)
+- Robotics (robotics, robotics software)
+- Embedded & hardware (embedded systems/software, firmware, hardware)
+- Aerospace (aerospace, structural)
+- Manufacturing & materials (manufacturing, materials, process, quality)
+- Product & design (product design, CAD, design engineer, R&D)
+- General catch-alls (engineering intern/co-op in London, Toronto, Waterloo)
+
+**`KEYWORDS`** (allowlist — job must match at least one):
+- Disciplines: mechanical, automation, robotics, manufacturing, embedded, aerospace, controls, firmware, hardware, structural, materials, process, quality, design, R&D, product
+- Tools/software: CAD, SolidWorks, mechatronics, MATLAB, Simulink, ANSYS, CATIA, Inventor, AutoCAD, Creo, NX, LabVIEW, PLC, SCADA
+- Hardware platforms: FPGA, microcontroller, Arduino, Raspberry Pi
+- Job-type signals: intern, co-op, coop, co op, entry level, junior, student, 4/8/12 month, work term, placement, new grad, undergrad, internship
+
+**`EXCLUDE_KEYWORDS`** (blocklist — any match drops the job):
+- Seniority: 5+/7+/10+ years, senior, lead, principal, staff engineer, manager, director, VP, head of, chief, executive
+- Graduate-level: PhD, doctorate, postdoc, masters required, graduate intern/engineer/developer
+- Designations: P.Eng, PMP, licensed engineer
+- Tone signals: proven track record, extensive experience, seasoned, expert level, deep expertise
+- Role type: permanent only, no students, full time permanent
+- Out-of-scope professions: nurse, doctor, lawyer, accountant, teacher, sales representative, real estate
+
 ## Key implementation details
 
 - `config.py` uses `Path(__file__).parent` for `DB_PATH` and `LOG_PATH` — required for Task Scheduler (cwd is not the project directory when run by the scheduler)

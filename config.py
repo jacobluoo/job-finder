@@ -42,15 +42,6 @@ SEARCH_QUERIES: list[dict] = [
     {"what": "firmware engineer intern", "where": "Ontario"},
     {"what": "hardware engineer intern", "where": "Ontario"},
 
-    # AI / ML / Software adjacent
-    {"what": "machine learning intern", "where": "Ontario"},
-    {"what": "AI engineer intern", "where": "Ontario"},
-    {"what": "software engineer intern", "where": "Ontario"},
-    {"what": "data engineer intern", "where": "Ontario"},
-    {"what": "computer vision intern", "where": "Ontario"},
-    {"what": "machine learning intern", "where": "remote"},
-    {"what": "AI engineer intern", "where": "remote"},
-
     # Aerospace
     {"what": "aerospace engineer intern", "where": "Ontario"},
     {"what": "aerospace engineer co-op", "where": "Ontario"},
@@ -91,9 +82,8 @@ KEYWORDS: list[str] = [
     "matlab", "simulink", "ansys", "catia", "inventor", "autocad",
     "creo", "nx", "labview", "plc", "scada",
 
-    # AI / software
-    "machine learning", "computer vision", "python", "embedded linux",
-    "ros", "fpga", "microcontroller", "arduino", "raspberry pi",
+    # Hardware platforms
+    "fpga", "microcontroller", "arduino", "raspberry pi",
 
     # Job type signals
     "4 month", "8 month", "12 month", "work term", "placement",
