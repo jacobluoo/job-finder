@@ -17,55 +17,52 @@ LOG_PATH: str = str(BASE_DIR / "logs" / "run.log")
 
 SEARCH_QUERIES: list[dict] = [
     # Mechanical
-    {"what": "mechanical engineer intern", "where": "Ontario"},
-    {"what": "mechanical engineer co-op", "where": "Ontario"},
-    {"what": "mechanical engineering student", "where": "Ontario"},
-    {"what": "mechanical design intern", "where": "Ontario"},
+    {"what": "mechanical engineer intern", "where": "Toronto"},
+    {"what": "mechanical engineer co-op", "where": "Toronto"},
+    {"what": "mechanical engineering student", "where": "Toronto"},
+    {"what": "mechanical design intern", "where": "Toronto"},
     {"what": "mechanical engineer intern", "where": "remote"},
     {"what": "mechanical engineer co-op", "where": "remote"},
 
     # Automation & Controls
-    {"what": "automation engineer co-op", "where": "Ontario"},
-    {"what": "automation engineer intern", "where": "Ontario"},
-    {"what": "controls engineer intern", "where": "Ontario"},
-    {"what": "PLC programmer intern", "where": "Ontario"},
+    {"what": "automation engineer co-op", "where": "Toronto"},
+    {"what": "automation engineer intern", "where": "Toronto"},
+    {"what": "controls engineer intern", "where": "Toronto"},
+    {"what": "PLC programmer intern", "where": "Toronto"},
 
     # Robotics
-    {"what": "robotics intern", "where": "Ontario"},
-    {"what": "robotics engineer co-op", "where": "Ontario"},
-    {"what": "robotics software intern", "where": "Ontario"},
+    {"what": "robotics intern", "where": "Toronto"},
+    {"what": "robotics engineer co-op", "where": "Toronto"},
+    {"what": "robotics software intern", "where": "Toronto"},
     {"what": "robotics intern", "where": "remote"},
 
     # Embedded & Hardware
-    {"what": "embedded systems intern", "where": "Ontario"},
-    {"what": "embedded software intern", "where": "Ontario"},
-    {"what": "firmware engineer intern", "where": "Ontario"},
-    {"what": "hardware engineer intern", "where": "Ontario"},
+    {"what": "embedded systems intern", "where": "Toronto"},
+    {"what": "embedded software intern", "where": "Toronto"},
+    {"what": "firmware engineer intern", "where": "Toronto"},
+    {"what": "hardware engineer intern", "where": "Toronto"},
 
     # Aerospace
-    {"what": "aerospace engineer intern", "where": "Ontario"},
-    {"what": "aerospace engineer co-op", "where": "Ontario"},
-    {"what": "structural engineer intern", "where": "Ontario"},
+    {"what": "aerospace engineer intern", "where": "Toronto"},
+    {"what": "aerospace engineer co-op", "where": "Toronto"},
+    {"what": "structural engineer intern", "where": "Toronto"},
 
     # Manufacturing & Materials
-    {"what": "manufacturing engineer intern", "where": "Ontario"},
-    {"what": "manufacturing engineer co-op", "where": "Ontario"},
-    {"what": "materials engineer intern", "where": "Ontario"},
-    {"what": "process engineer intern", "where": "Ontario"},
-    {"what": "quality engineer intern", "where": "Ontario"},
+    {"what": "manufacturing engineer intern", "where": "Toronto"},
+    {"what": "manufacturing engineer co-op", "where": "Toronto"},
+    {"what": "materials engineer intern", "where": "Toronto"},
+    {"what": "process engineer intern", "where": "Toronto"},
+    {"what": "quality engineer intern", "where": "Toronto"},
 
     # Product & Design
-    {"what": "product design intern", "where": "Ontario"},
-    {"what": "CAD designer intern", "where": "Ontario"},
-    {"what": "design engineer intern", "where": "Ontario"},
-    {"what": "R&D engineer intern", "where": "Ontario"},
+    {"what": "product design intern", "where": "Toronto"},
+    {"what": "CAD designer intern", "where": "Toronto"},
+    {"what": "design engineer intern", "where": "Toronto"},
+    {"what": "R&D engineer intern", "where": "Toronto"},
 
     # General catch-alls
-    {"what": "engineering intern", "where": "London Ontario"},
-    {"what": "engineering co-op", "where": "London Ontario"},
     {"what": "engineering intern", "where": "Toronto"},
     {"what": "engineering co-op", "where": "Toronto"},
-    {"what": "engineering intern", "where": "Waterloo Ontario"},
 ]
 
 KEYWORDS: list[str] = [

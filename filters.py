@@ -13,12 +13,28 @@ def _keyword_match(job: dict) -> bool:
     return any(f" {kw} " in haystack for kw in config.KEYWORDS)
 
 
+_GTA_TERMS = {
+    # City of Toronto and inner boroughs
+    "toronto", "north york", "scarborough", "etobicoke", "east york",
+    # Peel Region
+    "mississauga", "brampton", "caledon",
+    # York Region
+    "vaughan", "markham", "richmond hill", "newmarket", "aurora",
+    # Durham Region
+    "ajax", "pickering", "whitby", "oshawa",
+    # Halton Region
+    "oakville", "burlington", "milton",
+    # Region labels Adzuna uses in area[]
+    "city of toronto", "peel region", "york region", "durham region", "halton region",
+    # Remote
+    "remote",
+}
+
 def _location_match(job: dict) -> bool:
     location = (job.get("location") or "").lower()
     area = " ".join(job.get("area") or []).lower()
-    title = (job.get("title") or "").lower()
-    searchable = f"{location} {area} {title}"
-    return any(term in searchable for term in ["ontario", " on,", ", on", "remote"])
+    searchable = f"{location} {area}"
+    return any(term in searchable for term in _GTA_TERMS)
 
 def _exclude_match(job: dict) -> bool:
     title = (job.get("title") or "").lower()

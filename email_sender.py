@@ -24,7 +24,6 @@ def build_html(jobs: list[dict]) -> str:
             <th style="padding:10px 12px;text-align:left;color:#ffffff;font-weight:600;">Job Title</th>
             <th style="padding:10px 12px;text-align:left;color:#ffffff;font-weight:600;">Company</th>
             <th style="padding:10px 12px;text-align:left;color:#ffffff;font-weight:600;">Location</th>
-            <th style="padding:10px 12px;text-align:left;color:#ffffff;font-weight:600;">Salary</th>
             <th style="padding:10px 12px;text-align:left;color:#ffffff;font-weight:600;">Posted</th>
           </tr>
         </thead>
@@ -47,7 +46,6 @@ def _row_html(job: dict, index: int) -> str:
     url = job.get("url", "#")
     company = _escape(job.get("company", ""))
     location = _escape(job.get("location", ""))
-    salary = _format_salary(job)
     posted = _format_date(job.get("date_posted", ""))
     return f"""<tr style="background:{bg};">
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;">
@@ -55,7 +53,6 @@ def _row_html(job: dict, index: int) -> str:
       </td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{company}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{location}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{salary}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#6b7280;white-space:nowrap;">{posted}</td>
     </tr>"""
 
