@@ -15,6 +15,9 @@ class AdzunaSource(BaseSource):
     name = "adzuna"
 
     def fetch(self) -> list[dict]:
+        if not config.ADZUNA_APP_ID or not config.ADZUNA_APP_KEY:
+            logger.error("Adzuna credentials missing — set ADZUNA_APP_ID/ADZUNA_APP_KEY in .env")
+            return []
         seen_ids: set[str] = set()
         results: list[dict] = []
         for query in config.SEARCH_QUERIES:
@@ -59,7 +62,9 @@ class AdzunaSource(BaseSource):
                     logger.warning("Adzuna HTTP %s on attempt %d, retrying in %ds", resp.status_code, attempt + 1, delay)
                     time.sleep(delay)
                     continue
-                resp.raise_for_status()
+                if resp.status_code >= 400:
+                    logger.error("Adzuna HTTP %s (not retrying): %s", resp.status_code, resp.text[:200])
+                    return None
                 return resp.json()
             except requests.RequestException as exc:
                 logger.warning("Request error on attempt %d: %s", attempt + 1, exc)

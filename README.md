@@ -4,7 +4,7 @@ A personal daily job digest pipeline. Pulls co-op/intern listings from job APIs,
 
 ## How it works
 
-1. Fetches listings from Adzuna across ~40 search queries (mechanical, robotics, embedded, ML, aerospace, etc.)
+1. Fetches listings from Adzuna (official API) and Indeed Canada + LinkedIn (via [JobSpy](https://github.com/speedyapply/JobSpy), no key needed) across ~32 hardware-focused search queries (mechanical, robotics, embedded, aerospace, manufacturing, etc.). Each source fails independently.
 2. Filters by keyword allowlist and excludes senior/PhD/permanent roles
 3. Drops any listings already seen in previous runs (SQLite dedup)
 4. Emails a styled HTML digest via Gmail SMTP
@@ -59,7 +59,8 @@ filters.py              # Keyword + location filtering
 email_sender.py         # Builds and sends HTML digest via Gmail
 app.py                  # Flask web UI wrapper
 sources/
-  adzuna.py             # Adzuna API source (current only source)
+  adzuna.py             # Adzuna API source
+  jobspy_source.py      # Indeed CA + LinkedIn via python-jobspy (pinned; scraper, not an official API)
   __init__.py           # BaseSource ABC
 scheduler/
   run_daily.bat         # Task Scheduler wrapper
@@ -76,4 +77,4 @@ logs/                   # Log files (gitignored)
 
 ## Customizing searches
 
-Edit `SEARCH_QUERIES`, `KEYWORDS`, and `EXCLUDE_KEYWORDS` in `config.py`. No code changes needed elsewhere.
+Edit `SEARCH_QUERIES`, `KEYWORDS`, and `EXCLUDE_KEYWORDS` in `config.py`. `JOBSPY_SITES` controls which sites JobSpy scrapes (drop `"linkedin"` if it rate-limits you). No code changes needed elsewhere.

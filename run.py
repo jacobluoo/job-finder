@@ -7,6 +7,7 @@ import db
 import filters
 import email_sender
 from sources.adzuna import AdzunaSource
+from sources.jobspy_source import JobSpySource
 
 
 def _setup_logging() -> None:
@@ -27,14 +28,16 @@ def main() -> int:
     try:
         db.init_db(config.DB_PATH)
 
-        sources = [AdzunaSource()]
+        sources = [AdzunaSource(), JobSpySource()]
         all_jobs: list[dict] = []
         for source in sources:
             logger.info("Fetching from %s ...", source.name)
-            fetched = source.fetch()
+            try:
+                fetched = source.fetch()
+            except Exception:
+                logger.error("Source %s failed:\n%s", source.name, traceback.format_exc())
+                continue
             logger.info("  %d listings fetched", len(fetched))
-            for j in fetched:
-                logger.info(j.get("title",""))
             all_jobs.extend(fetched)
 
         filtered = filters.apply_filters(all_jobs)
@@ -47,8 +50,8 @@ def main() -> int:
             logger.info("No new listings found — skipping email")
             return 0
 
-        db.mark_seen(new_jobs, config.DB_PATH)
         email_sender.send_digest(new_jobs)
+        db.mark_seen(new_jobs, config.DB_PATH)
         logger.info("Digest sent: %d new listings", len(new_jobs))
         return 0
 

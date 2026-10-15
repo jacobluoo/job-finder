@@ -3,6 +3,7 @@ import config
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from urllib.parse import urlsplit
 
 
 def build_html(jobs: list[dict]) -> str:
@@ -43,7 +44,7 @@ def build_html(jobs: list[dict]) -> str:
 def _row_html(job: dict, index: int) -> str:
     bg = "#ffffff" if index % 2 == 0 else "#f8f9fa"
     title = _escape(job.get("title", ""))
-    url = job.get("url", "#")
+    url = _escape(_safe_url(job.get("url") or ""))
     company = _escape(job.get("company", ""))
     location = _escape(job.get("location", ""))
     posted = _format_date(job.get("date_posted", ""))
@@ -78,6 +79,14 @@ def _format_date(iso: str) -> str:
         return dt.strftime("%b %d, %Y")
     except ValueError:
         return iso
+
+
+def _safe_url(url: str) -> str:
+    try:
+        scheme = urlsplit(url).scheme.lower()
+    except ValueError:
+        return "#"
+    return url if scheme in ("http", "https") else "#"
 
 
 def _escape(text: str) -> str:

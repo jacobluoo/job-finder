@@ -65,6 +65,11 @@ SEARCH_QUERIES: list[dict] = [
     {"what": "engineering co-op", "where": "Toronto"},
 ]
 
+JOBSPY_SITES: list[str] = ["indeed", "linkedin"]
+JOBSPY_RESULTS_WANTED: int = 25
+JOBSPY_HOURS_OLD: int = 72      # matches Adzuna max_days_old=3
+JOBSPY_DELAY_SECONDS: float = 3
+
 KEYWORDS: list[str] = [
     # Original
     "mechanical", "automation", "robotics", "manufacturing", "embedded",
