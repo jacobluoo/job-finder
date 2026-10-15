@@ -70,51 +70,80 @@ JOBSPY_RESULTS_WANTED: int = 25
 JOBSPY_HOURS_OLD: int = 72      # matches Adzuna max_days_old=3
 JOBSPY_DELAY_SECONDS: float = 3
 
-KEYWORDS: list[str] = [
-    # Original
-    "mechanical", "automation", "robotics", "manufacturing", "embedded",
-    "cad", "solidworks", "mechatronics", "intern", "co-op", "coop",
-    "co op", "entry level", "junior", "student",
+# All keyword lists are matched against the job TITLE only, as whole words /
+# phrases, case-insensitive ("intern" does not match "internal", "milton" does
+# not match "hamilton"). A job passes when:
+#   1. it has a STUDENT_KEYWORDS term, AND
+#   2. it has a CORE_KEYWORDS term, OR a DISCIPLINE_KEYWORDS term with no
+#      OFF_SCOPE_KEYWORDS term, AND
+#   3. it has no EXCLUDE_KEYWORDS term.
 
-    # Engineering disciplines
-    "aerospace", "controls", "firmware", "hardware", "structural",
-    "materials", "process", "quality", "design", "R&D", "product",
-
-    # Tools & software
-    "matlab", "simulink", "ansys", "catia", "inventor", "autocad",
-    "creo", "nx", "labview", "plc", "scada",
-
-    # Hardware platforms
-    "fpga", "microcontroller", "arduino", "raspberry pi",
-
-    # Job type signals
-    "4 month", "8 month", "12 month", "work term", "placement",
-    "new grad", "undergrad", "internship",
+# Role-level signal: the title must say it's a student / entry-level role.
+STUDENT_KEYWORDS: list[str] = [
+    "intern", "interns", "internship", "internships",
+    "co-op", "coop", "co op", "pey", "student", "students",
+    "work term", "placement", "undergrad", "undergraduate",
+    "new grad", "new grads", "new graduate", "new graduates",
+    "entry level", "entry-level", "junior", "jr",
+    "trainee", "engineer in training", "eit",
+    # French (Quebec postings)
+    "stage", "stagiaire", "stagiaires",
 ]
 
+# Unambiguously hardware/mechanical: passes even alongside an off-scope word
+# (e.g. "Embedded Software Intern", "Robotics Software Co-op").
+CORE_KEYWORDS: list[str] = [
+    "mechanical", "mechatronics", "mechatronic", "robotics", "robotic", "robot",
+    "embedded", "firmware", "hardware", "electrical", "electronics",
+    "aerospace", "avionics", "manufacturing",
+    "mécanique", "électromécanique", "aérospatiale",
+    # Tools & platforms
+    "cad", "solidworks", "catia", "creo", "ansys", "autocad", "inventor",
+    "simulink", "labview", "plc", "scada", "fpga", "pcb", "microcontroller",
+]
+
+# In scope, but these words also show up in software/business/civil titles,
+# so they only count when no OFF_SCOPE_KEYWORDS term is present.
+DISCIPLINE_KEYWORDS: list[str] = [
+    "engineer", "engineering", "engineers", "technologist", "technician",
+    "automation", "controls", "structural", "materials", "industrial",
+    "process engineer", "process engineering", "quality", "reliability",
+    "validation", "r&d", "research & development", "research and development",
+    "lean", "continuous improvement", "operational excellence", "matlab",
+    "test", "testing", "testlab", "test lab",
+    "génie", "ingénierie", "ingénieur", "ingénieure", "ingénieur.e",
+]
+
+# Kills a DISCIPLINE_KEYWORDS match (but not a CORE_KEYWORDS match).
+OFF_SCOPE_KEYWORDS: list[str] = [
+    # Software / IT / data
+    "software", "developer", "programmer", "full stack", "frontend", "backend",
+    "web", "cloud", "devops", "data", "ai", "machine learning", "ml",
+    "analytics", "it", "security", "cybersecurity", "network", "compiler",
+    # Civil / environmental
+    "civil", "geotechnical", "geoscience", "environmental", "water",
+    "wastewater", "transportation", "highways",
+    # Business
+    "finance", "financial", "accounting", "audit", "marketing", "sales",
+    "business", "supply chain",
+    # French
+    "logiciel", "informatique", "civil", "environnement",
+]
+
+# Any match drops the job, regardless of the lists above.
 EXCLUDE_KEYWORDS: list[str] = [
-    # Experience requirements
-    "5+ years", "7+ years", "10+ years", "senior", "lead", "principal",
-    "staff engineer", "manager", "director", " vp ", "vice president",
-    "head of", "chief", "executive",
+    # Seniority
+    "senior", "sr", "lead", "principal", "staff engineer", "manager",
+    "director", "vp", "vice president", "head of", "chief", "executive",
 
     # Graduate level
     "phd", "ph.d", "doctorate", "doctoral", "postdoc", "post-doc",
-    "masters required", "msc required", "graduate degree required",
     "graduate intern", "graduate engineer", "graduate developer",
 
     # Professional designations you don't have yet
-    "p.eng", "professional engineer required", "pmp", "licensed engineer",
+    "p.eng", "pmp", "licensed engineer",
 
-    # Clearly not entry level
-    "proven track record", "extensive experience", "seasoned",
-    "expert level", "deep expertise",
-
-        # Permanent roles not open to students
-    "permanent only", "no students", "full time permanent",
-    "must be eligible to work permanently",
-
-    # Way out of scope
-    "nurse", "doctor", "lawyer", "accountant", "teacher",
-    "sales representative", "real estate",
+    # Look like hardware/automation roles but aren't
+    "robotic process automation", "rpa", "test automation", "qa automation",
+    "ehs", "health & safety", "health and safety",
 ]

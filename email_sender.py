@@ -98,7 +98,17 @@ def _escape(text: str) -> str:
     )
 
 
+def _posted_key(job: dict) -> datetime:
+    """Sort key: posting date, with undated listings treated as oldest."""
+    try:
+        dt = datetime.fromisoformat((job.get("date_posted") or "").replace("Z", "+00:00"))
+    except ValueError:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 def send_digest(jobs: list[dict]) -> None:
+    jobs = sorted(jobs, key=_posted_key, reverse=True)  # newest first
     today = datetime.now(timezone.utc).strftime("%B %d, %Y")
     subject = f"[Job Digest] {len(jobs)} new listing(s) — {today}"
 

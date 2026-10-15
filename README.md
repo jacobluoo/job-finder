@@ -1,13 +1,13 @@
 # job-finder
 
-A personal daily job digest pipeline. Pulls co-op/intern listings from job APIs, filters them by keyword and location, deduplicates against a local SQLite store, and emails an HTML digest. Runs on a Windows Task Scheduler cron or manually via a Flask web UI.
+A personal daily job digest pipeline. Pulls co-op/intern listings from job APIs, filters them by job title and location (Ontario), deduplicates against a local SQLite store, and emails an HTML digest. Runs on a Windows Task Scheduler cron or manually via a Flask web UI.
 
 ## How it works
 
 1. Fetches listings from Adzuna (official API) and Indeed Canada + LinkedIn (via [JobSpy](https://github.com/speedyapply/JobSpy), no key needed) across ~32 hardware-focused search queries (mechanical, robotics, embedded, aerospace, manufacturing, etc.). Each source fails independently.
-2. Filters by keyword allowlist and excludes senior/PhD/permanent roles
+2. Keeps titles that are both student-level (intern, co-op, new grad…) and hardware/mechanical, in Ontario; drops senior/PhD and software/civil/business roles
 3. Drops any listings already seen in previous runs (SQLite dedup)
-4. Emails a styled HTML digest via Gmail SMTP
+4. Emails a styled HTML digest via Gmail SMTP, newest postings first
 
 Only new listings trigger an email — if nothing new was found, the run exits silently.
 
@@ -55,7 +55,7 @@ See `scheduler/SETUP.md` for Task Scheduler configuration. Also logs to `logs/sc
 run.py                  # Pipeline entry point
 config.py               # All constants and search queries — edit this to change what gets searched
 db.py                   # SQLite helpers (init, dedup, mark seen)
-filters.py              # Keyword + location filtering
+filters.py              # Job-title + Ontario location filtering
 email_sender.py         # Builds and sends HTML digest via Gmail
 app.py                  # Flask web UI wrapper
 sources/
@@ -77,4 +77,4 @@ logs/                   # Log files (gitignored)
 
 ## Customizing searches
 
-Edit `SEARCH_QUERIES`, `KEYWORDS`, and `EXCLUDE_KEYWORDS` in `config.py`. `JOBSPY_SITES` controls which sites JobSpy scrapes (drop `"linkedin"` if it rate-limits you). No code changes needed elsewhere.
+Edit `SEARCH_QUERIES` and the keyword lists (`STUDENT_KEYWORDS`, `CORE_KEYWORDS`, `DISCIPLINE_KEYWORDS`, `OFF_SCOPE_KEYWORDS`, `EXCLUDE_KEYWORDS`) in `config.py` — the comment above them explains how they combine. `JOBSPY_SITES` controls which sites JobSpy scrapes (drop `"linkedin"` if it rate-limits you). No code changes needed elsewhere.
