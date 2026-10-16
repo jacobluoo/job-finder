@@ -25,6 +25,7 @@ ADZUNA_APP_KEY=your_app_key
 GMAIL_ADDRESS=you@gmail.com
 GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
 RECIPIENT_EMAIL=you@gmail.com
+SITE_URL=http://localhost:5000   # optional; where email links point
 ```
 
 `GMAIL_APP_PASSWORD` must be a [Gmail App Password](https://support.google.com/accounts/answer/185833) (16 chars), not your account password. Get Adzuna credentials at [developer.adzuna.com](https://developer.adzuna.com).
@@ -35,14 +36,16 @@ RECIPIENT_EMAIL=you@gmail.com
 ```bash
 python app.py          # or scheduler\start_site.bat to run it in the background
 ```
-Open http://localhost:5000. Tabs: **New**, **Viewed**, **Applied** (applied / interview / offer), **Closed** (rejected / ghosted / withdrawn), **Hidden**, **All**, plus search.
+Open http://localhost:5000. Tabs: **New**, **Viewed**, **Applied** (applied / interview / offer), **Closed** (rejected / ghosted / withdrawn), **Hidden**, **All**.
+- Each page shows the jobs **posted on one day**, newest day first — use the date chips or **‹ Newer day / Older day ›** to move between days.
+- **Search** (title, company, location) applies across all tabs; **Clear** — or emptying the box — brings back the full list.
 - Clicking a job opens the posting and marks it **viewed**.
 - Click a job's **status** to move it to the next one: new → viewed → applied → interview → offer → rejected (then back to new).
 - A job's **Details** page shows its timeline and lets you set any status with a note, including ghosted / withdrawn, and where you applied (company site, LinkedIn, Indeed…).
 - **Hide** removes jobs you don't want from the list.
 - **Refresh now** runs the pipeline immediately and shows the log as it goes.
 
-While running, the site checks hourly and runs the pipeline when the last run is over 20h old. To have it start when you log on, see `scheduler/SETUP.md`.
+While running, the site checks hourly and runs the pipeline when the last run is over 20h old. To have it start when you log on, see `scheduler/SETUP.md`. The background site runs as `pythonw.exe` — end it in Task Manager to stop it. Links in the digest email open this site, so it needs to be running to use them.
 
 **CLI (one-shot):**
 ```bash
@@ -76,6 +79,7 @@ scheduler/
   SETUP.md              # Start-at-logon instructions
 data/                   # SQLite DB lives here (gitignored)
 logs/                   # Log files (gitignored)
+CLAUDE.md               # Notes for Claude Code sessions working on this repo
 ```
 
 ## Adding a new job source
