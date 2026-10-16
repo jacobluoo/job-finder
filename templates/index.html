@@ -1,53 +1,187 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Job Finder</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 3rem 1rem; }
-    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: 2rem 2.5rem; max-width: 700px; width: 100%; }
-    h1 { margin: 0 0 1.5rem; font-size: 1.4rem; }
-    button { padding: .6rem 1.4rem; font-size: 1rem; border: none; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    #status { margin: 1rem 0 .5rem; font-weight: 600; }
-    .success { color: #16a34a; }
-    .error   { color: #dc2626; }
-    .running { color: #9333ea; }
-    pre { background: #1e1e1e; color: #d4d4d4; border-radius: 6px; padding: 1rem; font-size: .78rem; overflow-x: auto; max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Job Finder Pipeline</h1>
-    <button id="run-btn" onclick="runPipeline()">Run Pipeline</button>
-    <div id="status"></div>
-    <pre id="log-output" style="display:none"></pre>
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .runbar { display: flex; align-items: center; gap: .75rem; }
+  .tabs { display: flex; gap: .25rem; margin: 1.25rem 0 .75rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tabs a { padding: .5rem .85rem; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs a.active { color: var(--ink); border-color: var(--blue); font-weight: 600; }
+  .search { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .search input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: .5rem; border-bottom: 1px solid var(--line); }
+  td { padding: .6rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:target td { background: #fefce8; }
+  .title a { font-weight: 600; text-decoration: none; }
+  .actions { white-space: nowrap; }
+  .actions form { display: inline; }
+  .actions button { padding: .25rem .6rem; font-size: .8rem; }
+  button.badge { border: none; cursor: pointer; font-family: inherit; }
+  button.badge:hover { outline: 2px solid currentColor; outline-offset: 1px; }
+  button.badge::after { content: " ›"; opacity: .6; }
+  .days { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .75rem; }
+  .days a { padding: .25rem .65rem; border-radius: 999px; background: #f3f4f6; color: var(--ink); text-decoration: none; font-size: .8rem; }
+  .days a.active { background: var(--blue); color: #fff; }
+  .pager { display: flex; justify-content: space-between; align-items: center; margin: .75rem 0; }
+  .pager-day { font-weight: 600; }
+  .pager .step { text-decoration: none; font-size: .9rem; }
+  .pager .step.disabled { color: #d1d5db; }
+  #run-log { display: none; margin-top: .75rem; }
+  .empty { padding: 2rem; text-align: center; color: var(--muted); }
+</style>
+
+<div class="top">
+  <h1><a href="/">Job Finder</a></h1>
+  <div class="runbar">
+    <span class="muted" id="run-summary">
+      {% if last_run %}
+        Last run {{ last_run.started_at | ago }} &middot; {{ last_run.status }}
+        {% if last_run.new_count is not none %}&middot; {{ last_run.new_count }} new{% endif %}
+      {% else %}
+        No runs yet
+      {% endif %}
+    </span>
+    <button id="run-btn" onclick="startRun()">Refresh now</button>
   </div>
-  <script>
-    async function runPipeline() {
-      const btn = document.getElementById('run-btn');
-      const status = document.getElementById('status');
-      const logOutput = document.getElementById('log-output');
+</div>
+<pre id="run-log"></pre>
 
-      btn.disabled = true;
-      status.className = 'running';
-      status.textContent = 'Running…';
-      logOutput.style.display = 'none';
+<nav class="tabs">
+  {% for name, label in [("new","New"),("viewed","Viewed"),("applied","Applied"),("closed","Closed"),("hidden","Hidden"),("all","All")] %}
+    <a href="{{ url_for('index', view=name, q=q or None) }}" class="{{ 'active' if view == name }}">{{ label }} ({{ counts[name] }})</a>
+  {% endfor %}
+</nav>
 
+<form class="search" method="get">
+  <input type="hidden" name="view" value="{{ view }}">
+  <input type="search" name="q" id="search-q" value="{{ q }}" placeholder="Search title, company, location">
+  <button class="secondary">Search</button>
+  {% if q %}<a class="btn secondary" href="{{ url_for('index', view=view) }}">Clear</a>{% endif %}
+</form>
+{% if q %}<p class="muted" style="margin:-.5rem 0 1rem">Showing results for “{{ q }}” in every tab — Clear to see all jobs.</p>{% endif %}
+
+{% macro day_link(d, label, cls="") -%}
+  <a href="{{ url_for('index', view=view, q=q or None, day=d) }}" class="{{ cls }}">{{ label }}</a>
+{%- endmacro %}
+
+{% macro pager() %}
+<nav class="pager">
+  {% if newer_day %}{{ day_link(newer_day, "‹ Newer day", "step") }}{% else %}<span class="step disabled">‹ Newer day</span>{% endif %}
+  <span class="pager-day">{{ day | dayname }} &middot; {{ jobs | length }} job{{ "s" if jobs | length != 1 }}</span>
+  {% if older_day %}{{ day_link(older_day, "Older day ›", "step") }}{% else %}<span class="step disabled">Older day ›</span>{% endif %}
+</nav>
+{% endmacro %}
+
+{% if jobs %}
+<div class="days">
+  {% for d, n in days %}
+    {{ day_link(d, (d | dayname) ~ " (" ~ n ~ ")", "active" if d == day) }}
+  {% endfor %}
+</div>
+{{ pager() }}
+<table>
+  <thead>
+    <tr><th>Job</th><th>Location</th><th>Status</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for job in jobs %}
+    <tr id="job-{{ job.id | urlencode }}">
+      <td class="title">
+        <a href="{{ url_for('go', job_id=job.id) }}" target="_blank" rel="noopener" class="posting">{{ job.title }}</a>
+        <div class="muted">{{ job.company }}</div>
+      </td>
+      <td class="muted">{{ job.location }}</td>
+      <td>
+        <button class="badge {{ job.status }}" data-cycle="{{ url_for('cycle_status', job_id=job.id) }}"
+                title="Click to change to: {{ next_status(job.status) }}">{{ job.status }}</button>
+      </td>
+      <td class="actions">
+        <a class="btn secondary" style="padding:.25rem .6rem;font-size:.8rem" href="{{ url_for('job_detail', job_id=job.id) }}">Details</a>
+        {% if job.status != "hidden" %}
+        <form method="post" action="{{ url_for('update_status', job_id=job.id) }}">
+          <input type="hidden" name="status" value="hidden">
+          <input type="hidden" name="next" value="{{ request.full_path }}">
+          <button class="secondary" title="Not interested">Hide</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{{ pager() }}
+{% else %}
+  <div class="empty">No jobs here{% if q %} matching “{{ q }}”{% endif %}.</div>
+{% endif %}
+
+<script>
+  // Emptying the search box (typing it away or clicking its ×) reloads the full list.
+  const searchBox = document.getElementById('search-q');
+  const activeSearch = {{ q | tojson }};
+  searchBox.addEventListener('input', () => {
+    if (activeSearch && searchBox.value.trim() === '') searchBox.form.submit();
+  });
+
+  function showStatus(badge, status, next) {
+    badge.className = 'badge ' + status;
+    badge.textContent = status;
+    badge.title = 'Click to change to: ' + next;
+  }
+
+  // Status badge: each click steps to the next status (new → viewed → applied →
+  // interview → offer → rejected → new). No reload, so you can click repeatedly.
+  document.querySelectorAll('button.badge[data-cycle]').forEach(badge => {
+    badge.addEventListener('click', async () => {
+      badge.disabled = true;
       try {
-        const res = await fetch('/run', { method: 'POST' });
-        const data = await res.json();
-        status.className = data.success ? 'success' : 'error';
-        status.textContent = data.success ? 'Pipeline completed successfully.' : 'Pipeline failed — see log below.';
-        logOutput.textContent = data.logs;
-        logOutput.style.display = 'block';
-      } catch (err) {
-        status.className = 'error';
-        status.textContent = 'Request failed: ' + err.message;
+        const res = await fetch(badge.dataset.cycle, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          showStatus(badge, data.status, data.next);
+        }
       } finally {
-        btn.disabled = false;
+        badge.disabled = false;
       }
+    });
+  });
+
+  // Opening a posting marks it viewed on the server; reflect that here too.
+  document.querySelectorAll('a.posting').forEach(link => {
+    link.addEventListener('click', () => {
+      const badge = link.closest('tr').querySelector('button.badge');
+      if (badge.textContent === 'new') showStatus(badge, 'viewed', 'applied');
+    });
+  });
+
+  const btn = document.getElementById('run-btn');
+  const logEl = document.getElementById('run-log');
+  const summary = document.getElementById('run-summary');
+  let polling = false;
+
+  async function startRun() {
+    btn.disabled = true;
+    const res = await fetch('/run', { method: 'POST' });
+    if (res.status === 409) summary.textContent = 'A run is already in progress…';
+    poll();
+  }
+
+  async function poll() {
+    if (polling) return;
+    polling = true;
+    btn.disabled = true;
+    logEl.style.display = 'block';
+    while (true) {
+      const data = await (await fetch('/run/status')).json();
+      logEl.textContent = data.log || 'Starting… (a run takes a few minutes)';
+      logEl.scrollTop = logEl.scrollHeight;
+      if (!data.running) break;
+      summary.textContent = 'Running…';
+      await new Promise(r => setTimeout(r, 3000));
     }
-  </script>
-</body>
-</html>
+    location.reload();
+  }
+
+  // If a run (e.g. the automatic daily one) is going when the page opens, follow it.
+  fetch('/run/status').then(r => r.json()).then(d => { if (d.running) poll(); });
+</script>
+{% endblock %}

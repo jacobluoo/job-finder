@@ -1,5 +1,5 @@
 .env
-data/jobs.db
+data/*.db
 data/*.sqbpro
 logs/*.log
 __pycache__/

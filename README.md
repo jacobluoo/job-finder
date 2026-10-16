@@ -1,15 +1,15 @@
 # job-finder
 
-A personal daily job digest pipeline. Pulls co-op/intern listings from job APIs, filters them by job title and location (Ontario), deduplicates against a local SQLite store, and emails an HTML digest. Runs on a Windows Task Scheduler cron or manually via a Flask web UI.
+A personal daily job digest pipeline. Pulls co-op/intern listings from job APIs, filters them by job title and location (Ontario), stores them in a local SQLite database, and shows them on a local website (Flask) where you track each job: viewed, applied (and where), interview, offer, rejected, ghosted. A daily email digest links back to the site. Runs on your own machine — nothing is deployed.
 
 ## How it works
 
 1. Fetches listings from Adzuna (official API) and Indeed Canada + LinkedIn (via [JobSpy](https://github.com/speedyapply/JobSpy), no key needed) across ~32 hardware-focused search queries (mechanical, robotics, embedded, aerospace, manufacturing, etc.). Each source fails independently.
 2. Keeps titles that are both student-level (intern, co-op, new grad…) and hardware/mechanical, in Ontario; drops senior/PhD and software/civil/business roles
-3. Drops any listings already seen in previous runs (SQLite dedup)
-4. Emails a styled HTML digest via Gmail SMTP, newest postings first
+3. Drops any listings already seen in previous runs (SQLite dedup) and saves the new ones
+4. Emails a digest of the new ones (newest first) via Gmail SMTP; every link opens the local site
 
-Only new listings trigger an email — if nothing new was found, the run exits silently.
+Only new listings trigger an email. A run is skipped if the last successful one was under 20 hours ago (`MIN_HOURS_BETWEEN_RUNS`), so it runs about once a day no matter how often it's triggered.
 
 ## Setup
 
@@ -31,40 +31,49 @@ RECIPIENT_EMAIL=you@gmail.com
 
 ## Running
 
+**Website (the normal way):**
+```bash
+python app.py          # or scheduler\start_site.bat to run it in the background
+```
+Open http://localhost:5000. Tabs: **New**, **Viewed**, **Applied** (applied / interview / offer), **Closed** (rejected / ghosted / withdrawn), **Hidden**, **All**, plus search.
+- Clicking a job opens the posting and marks it **viewed**.
+- Click a job's **status** to move it to the next one: new → viewed → applied → interview → offer → rejected (then back to new).
+- A job's **Details** page shows its timeline and lets you set any status with a note, including ghosted / withdrawn, and where you applied (company site, LinkedIn, Indeed…).
+- **Hide** removes jobs you don't want from the list.
+- **Refresh now** runs the pipeline immediately and shows the log as it goes.
+
+While running, the site checks hourly and runs the pipeline when the last run is over 20h old. To have it start when you log on, see `scheduler/SETUP.md`.
+
 **CLI (one-shot):**
 ```bash
-python run.py
+python run.py          # skipped if the last run was < 20h ago
+python run.py --force  # run anyway
 ```
 Logs to `logs/run.log` and stdout. Exit 0 = success, exit 1 = error.
 
-**Web UI:**
+**Tests:**
 ```bash
-python app.py
+python test_filters.py && python test_app.py
 ```
-Opens a Flask UI at `http://localhost:5000` with a button to trigger the pipeline and view live logs.
-
-**Scheduled (Windows Task Scheduler):**
-```bat
-scheduler\run_daily.bat
-```
-See `scheduler/SETUP.md` for Task Scheduler configuration. Also logs to `logs/scheduler.log`.
 
 ## Project structure
 
 ```
 run.py                  # Pipeline entry point
 config.py               # All constants and search queries — edit this to change what gets searched
-db.py                   # SQLite helpers (init, dedup, mark seen)
+db.py                   # SQLite: jobs + status tracking, status timeline, run history
 filters.py              # Job-title + Ontario location filtering
 email_sender.py         # Builds and sends HTML digest via Gmail
-app.py                  # Flask web UI wrapper
+app.py                  # Flask website: job list, tracking, refresh, hourly run check
+templates/              # base.html, index.html (list), job.html (detail + timeline)
 sources/
   adzuna.py             # Adzuna API source
   jobspy_source.py      # Indeed CA + LinkedIn via python-jobspy (pinned; scraper, not an official API)
   __init__.py           # BaseSource ABC
 scheduler/
-  run_daily.bat         # Task Scheduler wrapper
-  SETUP.md              # Scheduler setup instructions
+  start_site.bat        # Starts the website in the background (use at logon)
+  run_daily.bat         # Runs the pipeline once (CLI fallback)
+  SETUP.md              # Start-at-logon instructions
 data/                   # SQLite DB lives here (gitignored)
 logs/                   # Log files (gitignored)
 ```

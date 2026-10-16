@@ -3,7 +3,7 @@ import config
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 
 def build_html(jobs: list[dict]) -> str:
@@ -17,6 +17,7 @@ def build_html(jobs: list[dict]) -> str:
     <div style="background:#1a1a2e;padding:24px 32px;">
       <h1 style="margin:0;color:#ffffff;font-size:22px;">Job Digest</h1>
       <p style="margin:6px 0 0;color:#a0a8c0;font-size:14px;">{len(jobs)} new listing(s) &middot; {today}</p>
+      <a href="{_escape(site_link())}" style="display:inline-block;margin-top:14px;padding:8px 16px;background:#2563eb;color:#ffffff;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">Open Job Finder</a>
     </div>
     <div style="padding:24px 32px;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -34,7 +35,7 @@ def build_html(jobs: list[dict]) -> str:
       </table>
     </div>
     <div style="padding:16px 32px;background:#f8f9fa;border-top:1px solid #e0e0e0;">
-      <p style="margin:0;color:#888;font-size:12px;">Powered by job_finder &middot; {today}</p>
+      <p style="margin:0;color:#888;font-size:12px;">Links open your local Job Finder ({_escape(config.SITE_URL)}) &mdash; it must be running. &middot; {today}</p>
     </div>
   </div>
 </body>
@@ -44,7 +45,7 @@ def build_html(jobs: list[dict]) -> str:
 def _row_html(job: dict, index: int) -> str:
     bg = "#ffffff" if index % 2 == 0 else "#f8f9fa"
     title = _escape(job.get("title", ""))
-    url = _escape(_safe_url(job.get("url") or ""))
+    url = _escape(site_link(job))
     company = _escape(job.get("company", ""))
     location = _escape(job.get("location", ""))
     posted = _format_date(job.get("date_posted", ""))
@@ -56,6 +57,16 @@ def _row_html(job: dict, index: int) -> str:
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{location}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#6b7280;white-space:nowrap;">{posted}</td>
     </tr>"""
+
+
+def site_link(job: dict | None = None) -> str:
+    """Link into the local website's New tab — for a job, the page for its
+    posting day, scrolled to it. Postings are opened from the site so clicks
+    get tracked there."""
+    url = f"{config.SITE_URL}/?view=new"
+    if not job:
+        return url
+    return f"{url}&day={posted_day(job) or 'none'}#job-{quote(job['id'], safe='')}"
 
 
 def _format_salary(job: dict) -> str:
@@ -81,7 +92,7 @@ def _format_date(iso: str) -> str:
         return iso
 
 
-def _safe_url(url: str) -> str:
+def safe_url(url: str) -> str:
     try:
         scheme = urlsplit(url).scheme.lower()
     except ValueError:
@@ -98,7 +109,7 @@ def _escape(text: str) -> str:
     )
 
 
-def _posted_key(job: dict) -> datetime:
+def posted_key(job: dict) -> datetime:
     """Sort key: posting date, with undated listings treated as oldest."""
     try:
         dt = datetime.fromisoformat((job.get("date_posted") or "").replace("Z", "+00:00"))
@@ -107,13 +118,19 @@ def _posted_key(job: dict) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+def posted_day(job: dict) -> str:
+    """Posting date as YYYY-MM-DD ('' if unknown) — the website shows one day per page."""
+    dt = posted_key(job)
+    return "" if dt.year == datetime.min.year else dt.date().isoformat()
+
+
 def send_digest(jobs: list[dict]) -> None:
-    jobs = sorted(jobs, key=_posted_key, reverse=True)  # newest first
+    jobs = sorted(jobs, key=posted_key, reverse=True)  # newest first
     today = datetime.now(timezone.utc).strftime("%B %d, %Y")
     subject = f"[Job Digest] {len(jobs)} new listing(s) — {today}"
 
-    plain_lines = [f"{j.get('title','')} @ {j.get('company','')} — {j.get('url','')}" for j in jobs]
-    plain_body = "\n".join(plain_lines)
+    plain_lines = [f"{j.get('title','')} @ {j.get('company','')}" for j in jobs]
+    plain_body = f"Open Job Finder: {site_link()}\n\n" + "\n".join(plain_lines)
     html_body = build_html(jobs)
 
     msg = MIMEMultipart("alternative")

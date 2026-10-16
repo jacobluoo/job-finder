@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} — Job Finder{% endblock %}
+{% block content %}
+<style>
+  .grid { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; margin-top: 1rem; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1rem; margin: 1rem 0; font-size: .9rem; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  form.update { display: grid; gap: .5rem; background: #f9fafb; padding: 1rem; border-radius: 8px; }
+  .applied-only { display: none; gap: .5rem; }
+  form.update.applying .applied-only { display: grid; }
+  ol.timeline { list-style: none; padding: 0; margin: 1rem 0; }
+  ol.timeline li { border-left: 2px solid var(--line); padding: 0 0 1rem 1rem; position: relative; }
+  ol.timeline li::before { content: ""; position: absolute; left: -6px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+</style>
+
+<a href="{{ url_for('index') }}" class="muted">&larr; All jobs</a>
+<h1 style="margin-top:.5rem">{{ job.title }}</h1>
+<div class="muted">{{ job.company }} &middot; {{ job.location }}</div>
+
+<div class="grid">
+  <div>
+    <p><a class="btn" href="{{ url_for('go', job_id=job.id) }}" target="_blank" rel="noopener">Open posting</a></p>
+    <dl>
+      <dt>Status</dt><dd><span class="badge {{ job.status }}">{{ job.status }}</span></dd>
+      <dt>Posted</dt><dd>{{ job.date_posted | date }}</dd>
+      <dt>Found</dt><dd>{{ job.first_seen | date }}</dd>
+      <dt>Source</dt><dd>{{ job.source }}</dd>
+      {% if job.viewed_at %}<dt>Viewed</dt><dd>{{ job.viewed_at | date }}</dd>{% endif %}
+      {% if job.applied_at %}<dt>Applied</dt><dd>{{ job.applied_at | date }}{% if job.applied_via %} via {{ job.applied_via }}{% endif %}</dd>{% endif %}
+      {% if job.application_url %}<dt>Application</dt><dd><a href="{{ job.application_url }}" target="_blank" rel="noopener">{{ job.application_url }}</a></dd>{% endif %}
+    </dl>
+
+    <h3>Timeline</h3>
+    {% if events %}
+    <ol class="timeline">
+      {% for e in events %}
+        <li>
+          <span class="badge {{ e.status }}">{{ e.status }}</span>
+          <span class="muted">{{ e.created_at | date }}</span>
+          {% if e.note %}<div>{{ e.note }}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+      <p class="muted">No updates yet.</p>
+    {% endif %}
+  </div>
+
+  <div>
+    <h3>Update</h3>
+    <form class="update" method="post" action="{{ url_for('update_status', job_id=job.id) }}">
+      <select name="status" id="status" required>
+        {% for s in statuses %}
+          <option value="{{ s }}" {{ 'selected' if s == job.status }}>{{ s | capitalize }}</option>
+        {% endfor %}
+      </select>
+      <div class="applied-only">
+        <select name="applied_via" id="applied_via">
+          <option value="">Where did you apply?</option>
+          {% for via in applied_via %}
+            <option {{ 'selected' if via == job.applied_via }}>{{ via }}</option>
+          {% endfor %}
+        </select>
+        <input name="application_url" type="url" value="{{ job.application_url or '' }}" placeholder="Application / portal link (optional)">
+      </div>
+      <textarea name="note" rows="3" placeholder="Note, e.g. 'phone screen Oct 20'"></textarea>
+      <button>Save</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const form = document.querySelector('form.update');
+  const status = document.getElementById('status');
+  const via = document.getElementById('applied_via');
+  function sync() {
+    const applying = status.value === 'applied';
+    form.classList.toggle('applying', applying);
+    via.required = applying;
+  }
+  status.addEventListener('change', sync);
+  sync();
+</script>
+{% endblock %}

@@ -15,6 +15,13 @@ RECIPIENT_EMAIL: str = os.getenv("RECIPIENT_EMAIL", "jacob.rj.luo@gmail.com")
 DB_PATH: str = str(BASE_DIR / "data" / "jobs.db")
 LOG_PATH: str = str(BASE_DIR / "logs" / "run.log")
 
+# Address of the local website; links in the email digest point here.
+SITE_URL: str = os.getenv("SITE_URL", "http://localhost:5000")
+
+# A run is skipped if the last successful one finished less than this many
+# hours ago, so logon / site-open / hourly checks can't hammer the job sites.
+MIN_HOURS_BETWEEN_RUNS: int = 20
+
 SEARCH_QUERIES: list[dict] = [
     # Mechanical
     {"what": "mechanical engineer intern", "where": "Toronto"},
