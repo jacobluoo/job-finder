@@ -46,14 +46,14 @@ def _row_html(job: dict, index: int) -> str:
     bg = "#ffffff" if index % 2 == 0 else "#f8f9fa"
     title = _escape(job.get("title", ""))
     url = _escape(site_link(job))
-    go = _escape(go_link(job))
+    posting = _escape(safe_url(job.get("url") or ""))
     company = _escape(job.get("company", ""))
     location = _escape(job.get("location", ""))
     posted = _format_date(job.get("date_posted", ""))
     return f"""<tr style="background:{bg};">
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;">
         <a href="{url}" style="color:#2563eb;text-decoration:none;font-weight:500;">{title}</a>
-        <a href="{go}" style="margin-left:6px;color:#6b7280;text-decoration:none;font-size:12px;white-space:nowrap;">Open posting &#8599;</a>
+        <a href="{posting}" style="margin-left:6px;color:#6b7280;text-decoration:none;font-size:12px;white-space:nowrap;">Open posting &#8599;</a>
       </td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{company}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;color:#374151;">{location}</td>
@@ -63,18 +63,12 @@ def _row_html(job: dict, index: int) -> str:
 
 def site_link(job: dict | None = None) -> str:
     """Link into the local website's New tab — for a job, the page for its
-    posting day, scrolled to it. Postings are opened from the site so clicks
-    get tracked there."""
+    posting day, scrolled to it. (Each row also has an untracked direct
+    "Open posting" link.)"""
     url = f"{config.SITE_URL}/?view=new"
     if not job:
         return url
     return f"{url}&day={posted_day(job) or 'none'}#job-{quote(job['id'], safe='')}"
-
-
-def go_link(job: dict) -> str:
-    """Link straight to the posting, via the site's /go redirect so the view
-    still gets tracked."""
-    return f"{config.SITE_URL}/go/{quote(job['id'], safe='')}"
 
 
 def _format_salary(job: dict) -> str:
@@ -137,7 +131,7 @@ def send_digest(jobs: list[dict]) -> None:
     today = datetime.now(timezone.utc).strftime("%B %d, %Y")
     subject = f"[Job Digest] {len(jobs)} new listing(s) — {today}"
 
-    plain_lines = [f"{j.get('title','')} @ {j.get('company','')} — {go_link(j)}" for j in jobs]
+    plain_lines = [f"{j.get('title','')} @ {j.get('company','')} — {safe_url(j.get('url') or '')}" for j in jobs]
     plain_body = f"Open Job Finder: {site_link()}\n\n" + "\n".join(plain_lines)
     html_body = build_html(jobs)
 

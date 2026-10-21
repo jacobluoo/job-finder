@@ -82,7 +82,7 @@ Only one rule: the 20h guard in `run.main`. Triggers: the site checks at startup
 - Statuses: `db.STATUSES`; tab mapping: `db.VIEWS` (applied tab = applied/interview/offer; closed = rejected/ghosted/withdrawn).
 
 ### Email (`email_sender.py`)
-Every link points at the site, never the posting: `site_link(job)` → `SITE_URL/?view=new&day=<posted_day>#job-<quoted id>`; the list rows have matching `id="job-{{ job.id | urlencode }}"`. Inline CSS only (Gmail strips `<style>`); `_escape()` HTML-escapes all job fields.
+Title links point at the site: `site_link(job)` → `SITE_URL/?view=new&day=<posted_day>#job-<quoted id>`; the list rows have matching `id="job-{{ job.id | urlencode }}"`. Each row also has an "Open posting ↗" link straight to the posting (`safe_url(job['url'])`) — deliberately **not** via `/go`, so it doesn't mark the job viewed. Inline CSS only (Gmail strips `<style>`); `_escape()` HTML-escapes all job fields.
 
 ## Normalized job dict contract
 
