@@ -17,7 +17,7 @@ So the only thing to set up is: **start the site when you log on.**
 1. Press `Win + R`, type `shell:startup`, press Enter.
 2. Right-click in the folder → **New → Shortcut**.
 3. Location: the full path to `scheduler\start_site.bat` in this project, e.g.
-   `C:\Users\jacob\Documents\person\porfollio\job-finder\scheduler\start_site.bat`
+   `C:\Users\Jacob\Documents\Coding\personal\job_finder\scheduler\start_site.bat`
 4. Name it `Job Finder` → **Finish**.
 
 ## Option B — Task Scheduler

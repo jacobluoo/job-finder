@@ -31,9 +31,9 @@ RECIPIENT_EMAIL=
 SITE_URL=            # optional, defaults to http://localhost:5000 (used in email links)
 ```
 
-`GMAIL_APP_PASSWORD` must be a Gmail App Password (16-char). `RECIPIENT_EMAIL` defaults to `jacob.rj.luo@gmail.com`. Adzuna keys are currently unset, so that source logs an error and returns nothing; JobSpy needs no key.
+`GMAIL_APP_PASSWORD` must be a Gmail App Password (16-char). `RECIPIENT_EMAIL` defaults to `jacob.rj.luo@gmail.com`. Adzuna keys are set (without them that source logs an error and returns nothing); JobSpy needs no key.
 
-`pip install -r requirements.txt` (`python-jobspy` is pinned).
+`pip install -r requirements.txt` (`python-jobspy` is pinned). On this machine use **Python 3.12** — it's first on PATH, so `python` / `pythonw` (and the `.bat` files) resolve to it; the 3.14 install has no `jobspy`.
 
 ## Architecture
 
