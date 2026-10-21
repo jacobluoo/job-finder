@@ -82,8 +82,12 @@ assert ">Clear</a>" not in html and "Older day" in html, "empty search shows eve
 link = email_sender.site_link(JOBS[0])
 assert link.endswith("/?view=new&day=2026-10-14#job-jobspy%3Ali-1"), link
 
+# The email's direct link goes through /go (tracked), and appears in the HTML
+assert email_sender.go_link(JOBS[0]).endswith("/go/jobspy%3Ali-1")
+assert 'href="' + email_sender.go_link(JOBS[0]) + '"' in email_sender.build_html(JOBS)
+
 # Clicking a posting marks it viewed and redirects to it
-resp = client.get("/go/jobspy:li-1")
+resp = client.get("/go/jobspy%3Ali-1")
 assert resp.status_code == 302 and resp.headers["Location"] == "https://example.com/1"
 assert db.get_job(config.DB_PATH, "jobspy:li-1")["status"] == "viewed"
 
